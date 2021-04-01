@@ -1,7 +1,9 @@
 const Employee = require('../employee.model');
+const Department = require('../department.model');
 const expect = require('chai').expect;
 const mongoose = require('mongoose');
 const MongoMemoryServer = require('mongodb-memory-server').MongoMemoryServer;
+const ObjectId = require('mongodb').ObjectId;
 
 describe('Employee', () => {
 
@@ -42,6 +44,30 @@ describe('Employee', () => {
     });
 
     after(async () => {
+      await Employee.deleteMany();
+    });
+  });
+
+  describe('Reading with "populate"', () => {
+
+    it('should return all the data with "find" method with "populate"', async () => {
+      const testDepOne = new Department({ _id: ObjectId('111111111111aaaaaaaaaaaa'), name: 'Marketing' });
+      await testDepOne.save();
+      const testDepTwo = new Department({ _id: ObjectId('222222222222bbbbbbbbbbbb'), name: 'Księgowość' });
+      await testDepTwo.save();
+      const testEmpOne = new Employee({ firstName: 'Józef', lastName: 'Kukułka', department: '111111111111aaaaaaaaaaaa' });
+      await testEmpOne.save();
+      const testEmpTwo = new Employee({ firstName: 'Helena', lastName: 'Zięba', department: '222222222222bbbbbbbbbbbb' });
+      await testEmpTwo.save();
+
+      const employees = await Employee.find().populate('department');
+      const expectedLength = 2;
+      expect(employees.length).to.be.equal(expectedLength);
+      expect(employees[1].department.name).to.be.equal('Księgowość');
+    });
+
+    after(async () => {
+      await Department.deleteMany();
       await Employee.deleteMany();
     });
   });
